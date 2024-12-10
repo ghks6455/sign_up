@@ -1,7 +1,6 @@
 // .env 파일에서 환경 변수를 로드하여 process.env에 추가
 require("dotenv").config();
-const db = require("./config/db");
-const bcrypt = require("bcrypt");
+
 const express = require("express");
 
 const server = express();
@@ -10,58 +9,26 @@ server.use(express.json());
 
 const PORT = 8080;
 
+const join = require("./join");
+const login = require("./login");
+const auth = require("./middleware/auth");
+const course = require("./course");
+const visit = require("./visit");
+
 // 회원 도메인
 // 회원 가입 서비스를 제공할 떄 어떤 걸 받을까받을까?
 // login_id, login_pw, name
-server.post("/api/v1/auth/join", async function (req, res) {
-  // body
-  const loginId = req.body.id;
-  const loginPw = req.body.pw;
-  const name = req.body.name || "";
+server.post("/api/v1/auth/join", join);
+server.post("/api/v1/auth/login", login);
+server.post("/api/v1/auth/auth", auth);
 
-  // 서버 유효성검사 (필수), 클라이언트(react, html) 유효성검사 (선택)
-  if (!loginId || !loginPw) {
-    // 400 - Bad Request
-    return res.status(400).json({ status: "error", message: "id, pw는 필수 입니다.", data: null });
-  }
+// 코스 리스트 (인증이 필요한 enpoint 주소)
+server.get("/api/v1/auth/course", auth, course);
+server.post("/api/v1/auth/visit", auth, visit);
 
-  // 중복 검사 loginId
-  let QUERY1 = `
-        SELECT 
-            user_id, user_login_id, user_login_pw, user_name
-        FROM 
- 	        user
-        WHERE
-            user_login_id = ?`;
-
-  const user = await db.execute(QUERY1, [loginId]).then((result) => result[0][0]);
-  if (user) {
-    return res.status(409).json({ status: "error", message: "이미 존재하는 id입니다.", data: null });
-  }
-
-  // 비밀번호 암호화
-  const encryptPw = await bcrypt.hash(loginPw, 10);
-
-  // 데이터베이스 사용자 정보 저장
-  const QUERY2 = `
-        INSERT INTO user
-        (
-	        user_login_id,
-	        user_login_pw,
-	        user_name
-        )
-        VALUES
-        (
-            ?,
-            ?,
-            ?
-        )`;
-
-  await db.execute(QUERY2, [loginId, encryptPw, name]);
-
-  // 성공 응답
-  return res.status(200).json({ status: "success", message: "회원가입 성공", data: null });
-});
+// QR코드 -> 문자열
+// QR코드 -> 문자열 -> 암호화, 거리 계산(유효한 거리에 들어올때 가능) -> 서버로 전송
+// QR -> 문자열 -> db에 문자열이 있는지 확인하고 방문처리 (이걸로 진행)
 
 server.listen(PORT, () => {
   console.log(`${PORT} 서버 오픈`);
