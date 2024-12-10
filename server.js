@@ -26,7 +26,7 @@ server.post("/api/v1/auth/auth", auth); // 토큰 필요함
 
 // 코스 리스트 (인증이 필요한 enpoint 주소)
 // 방문한 코스와 방문하지 않은 코스를 구분하여 모두 불러옴
-server.get("/api/v1/auth/course", auth, course);
+server.get("/api/v1/auth/course", auth, course); // 스탬프 페이지로 들어갈때 사용하면 될듯?
 
 // QR인증 시 방문 한 코스와 방문하지 않은 코스를 구별하여 방문 한 코스라면 실패 방문하지 않았다면 user_course에 방문이력을 저장
 server.post("/api/v1/auth/visit", auth, visit);
